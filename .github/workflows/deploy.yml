@@ -14,23 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  send-start-deploy-telegram-message:
-    name: Send Telegram message
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Send Telegram message
-        uses: proDreams/actions-telegram-notifier@main
-        with:
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-          thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
-          status: info
-          notify_fields: 'repository,branch,commit,workflow'
-          title: 'Build started'
-
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
@@ -56,3 +39,39 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  send-telegram-message:
+    name: Send Telegram message
+    needs: [build-docker-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Send Telegram message
+        uses: proDreams/actions-telegram-notifier@main
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+          status: success
+          notify_fields: 'repository,branch,commit,workflow'
+          title: 'Build finished'
+
+  notify-on-error:
+    runs-on: ubuntu-latest
+    needs: [build-docker-image]
+    if: failure()
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Send Telegram message
+        uses: proDreams/actions-telegram-notifier@main
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+          status: error
+          notify_fields: 'repository,branch,commit,workflow'
+          title: 'Build failed'
