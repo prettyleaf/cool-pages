@@ -181,13 +181,32 @@ function ParticleHeart({ active }) {
 }
 
 // ─── App ───
+function isTimeReached() {
+  const now = new Date()
+  const tomsk = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tomsk' }))
+  const target = new Date(2026, 5, 19, 22, 0, 0)
+  return tomsk >= target
+}
+
 function App() {
   const [phase, setPhase] = useState('popup')
   const [countDone, setCountDone] = useState(false)
   const [showFireworks, setShowFireworks] = useState(false)
   const [hideStars, setHideStars] = useState(false)
   const [showGreeting, setShowGreeting] = useState(false)
+  const [ready, setReady] = useState(isTimeReached)
   const balloonsRef = useRef(null)
+
+  useEffect(() => {
+    if (ready) return
+    const id = setInterval(() => {
+      if (isTimeReached()) {
+        setReady(true)
+        clearInterval(id)
+      }
+    }, 1000)
+    return () => clearInterval(id)
+  }, [ready])
 
   const handleStart = useCallback(() => {
     if (balloonsRef.current) {
@@ -272,15 +291,16 @@ function App() {
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
               <SparklesText
-                text="Нажми, когда будешь готова"
+                text={ready ? "Нажми, когда будешь готова" : "Ещё рано"}
                 className="popup-sparkle-text"
                 sparklesCount={6}
                 colors={{ first: 'rgba(255,255,255,0.6)', second: 'rgba(255,255,255,0.3)' }}
               />
               <button
                 type="button"
-                className="start-button"
+                className={`start-button${ready ? '' : ' start-button--disabled'}`}
                 onClick={handleStart}
+                disabled={!ready}
               >
                 открыть
               </button>

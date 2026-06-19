@@ -58,10 +58,15 @@
   letter-spacing: 0.5px;
 }
 
-.start-button:hover {
+.start-button:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.8);
+}
+
+.start-button--disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .popup-sparkle-text {
