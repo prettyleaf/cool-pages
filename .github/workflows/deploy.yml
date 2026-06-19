@@ -14,6 +14,23 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  send-start-deploy-telegram-message:
+    name: Send Telegram message
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Send Telegram message
+        uses: proDreams/actions-telegram-notifier@main
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          thread_id: ${{ secrets.TELEGRAM_TOPIC_ID }}
+          status: info
+          notify_fields: 'repository,branch,commit,workflow'
+          title: 'Build started'
+
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
