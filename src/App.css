@@ -45,7 +45,7 @@
 }
 
 .start-button {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 14px;
   font-weight: 400;
   padding: 12px 36px;
@@ -74,7 +74,7 @@
   justify-content: center;
   gap: 12px;
   margin-bottom: 24px;
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .popup-sparkle-text {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 15px !important;
   font-weight: 300 !important;
   color: rgba(255, 255, 255, 0.4);
@@ -132,7 +132,7 @@
 }
 
 .counter-number {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 120px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
@@ -140,7 +140,7 @@
 }
 
 .counter-number-static {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 120px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
@@ -160,7 +160,7 @@
 }
 
 .message-line {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 32px;
   font-weight: 300;
   line-height: 1.5;
