@@ -69,6 +69,29 @@
   cursor: not-allowed;
 }
 
+.countdown {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-family: 'Sora', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-segment {
+  font-size: 22px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.5px;
+}
+
+.countdown-segment small {
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+  margin-left: 2px;
+}
+
 .popup-sparkle-text {
   font-family: 'Sora', sans-serif;
   font-size: 15px !important;
@@ -90,6 +113,11 @@
 
 .greeting-sparkle-text strong {
   font-weight: 400;
+}
+
+.greeting-emoji {
+  font-size: 48px;
+  margin-top: 12px;
 }
 
 /* ─── Counter ─── */

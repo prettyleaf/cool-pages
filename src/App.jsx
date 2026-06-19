@@ -181,11 +181,16 @@ function ParticleHeart({ active }) {
 }
 
 // ─── App ───
-function isTimeReached() {
-  const now = new Date()
-  const tomsk = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tomsk' }))
-  const target = new Date(2026, 5, 19, 22, 0, 0)
-  return tomsk >= target
+const TARGET_DATE = new Date('2026-07-05T00:00:00+07:00')
+
+function getTimeLeft() {
+  const diff = TARGET_DATE - Date.now()
+  if (diff <= 0) return null
+  const d = Math.floor(diff / 86400000)
+  const h = Math.floor((diff % 86400000) / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  return { d, h, m, s }
 }
 
 function App() {
@@ -194,15 +199,20 @@ function App() {
   const [showFireworks, setShowFireworks] = useState(false)
   const [hideStars, setHideStars] = useState(false)
   const [showGreeting, setShowGreeting] = useState(false)
-  const [ready, setReady] = useState(isTimeReached)
+  const [ready, setReady] = useState(() => Date.now() >= TARGET_DATE)
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft)
   const balloonsRef = useRef(null)
 
   useEffect(() => {
     if (ready) return
     const id = setInterval(() => {
-      if (isTimeReached()) {
+      const tl = getTimeLeft()
+      if (!tl) {
         setReady(true)
+        setTimeLeft(null)
         clearInterval(id)
+      } else {
+        setTimeLeft(tl)
       }
     }, 1000)
     return () => clearInterval(id)
@@ -293,9 +303,17 @@ function App() {
               <SparklesText
                 text={ready ? "Нажми, когда будешь готова" : "Ещё рано"}
                 className="popup-sparkle-text"
-                sparklesCount={6}
+                sparklesCount={8}
                 colors={{ first: 'rgba(255,255,255,0.6)', second: 'rgba(255,255,255,0.3)' }}
               />
+              {!ready && timeLeft && (
+                <div className="countdown">
+                  <span className="countdown-segment">{timeLeft.d}<small>д</small></span>
+                  <span className="countdown-segment">{String(timeLeft.h).padStart(2, '0')}<small>ч</small></span>
+                  <span className="countdown-segment">{String(timeLeft.m).padStart(2, '0')}<small>м</small></span>
+                  <span className="countdown-segment">{String(timeLeft.s).padStart(2, '0')}<small>с</small></span>
+                </div>
+              )}
               <button
                 type="button"
                 className={`start-button${ready ? '' : ' start-button--disabled'}`}
@@ -343,11 +361,12 @@ function App() {
           >
             <div className="message-line main-greeting">
               <SparklesText
-                text="С Днём Рождения 🎁"
+                text="С Днём Рождения"
                 className="greeting-sparkle-text"
                 sparklesCount={12}
                 colors={{ first: '#d2647a', second: '#e8a0b0' }}
               />
+              <div className="greeting-emoji">🎁🎁🎁</div>
             </div>
           </motion.div>
         )}
