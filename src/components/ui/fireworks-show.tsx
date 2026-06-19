@@ -167,7 +167,7 @@ export const FireworksBackground = ({
 
     const now = Date.now();
     if (now - lastFireworkTimeRef.current > 500 + Math.random() * 1000) {
-      const numberOfFireworks = Math.floor(Math.random() * 5) + 2;
+      const numberOfFireworks = Math.floor(Math.random() * 4) + 1;
       for (let i = 0; i < numberOfFireworks; i++) {
         createFirework();
       }
