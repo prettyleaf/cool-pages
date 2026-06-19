@@ -5,6 +5,7 @@ import autoprefixer from 'autoprefixer'
 import path from 'path'
 
 export default defineConfig({
+  base: '/cool-pages/',
   plugins: [react()],
   resolve: {
     alias: {
