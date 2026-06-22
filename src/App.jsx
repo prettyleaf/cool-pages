@@ -5,6 +5,7 @@ import { CountAnimation } from '@/components/ui/count-animation'
 import { FireworksBackground } from '@/components/ui/fireworks-show'
 import { Balloons } from '@/components/ui/balloons'
 import { SparklesText } from '@/components/ui/sparkles-text'
+import confetti from 'canvas-confetti'
 import './App.css'
 
 function heartX(t) {
@@ -65,6 +66,9 @@ function ParticleHeart({ active }) {
           angle: t,
           arrived: false,
           inner: true,
+          driftPhase: Math.random() * Math.PI * 2,
+          driftSpeed: 0.4 + Math.random() * 0.6,
+          driftRadius: 4 + Math.random() * 8,
         })
       }
 
@@ -75,7 +79,7 @@ function ParticleHeart({ active }) {
     const PULSE_INTERVAL = 1.8
     let nextPulse = 3
 
-    function drawHeartRing(cx, cy, scale, ringScale, alpha) {
+    function drawHeartRing(cx, cy, scale, ringScale, alpha, progress) {
       const steps = 120
       ctx.beginPath()
       for (let i = 0; i <= steps; i++) {
@@ -87,7 +91,8 @@ function ParticleHeart({ active }) {
       }
       ctx.closePath()
       ctx.strokeStyle = `rgba(210, 100, 120, ${alpha})`
-      ctx.lineWidth = 1.5
+      const thickness = 3.5 * (1 - progress)
+      ctx.lineWidth = Math.max(thickness, 0.2)
       ctx.stroke()
     }
 
@@ -114,7 +119,7 @@ function ParticleHeart({ active }) {
         const progress = age / maxAge
         const ringScale = 1 + progress * 2.5
         const alpha = 0.35 * (1 - progress)
-        drawHeartRing(w / 2, h / 2, scale, ringScale, alpha)
+        drawHeartRing(w / 2, h / 2, scale, ringScale, alpha, progress)
       }
 
       const breathe = Math.sin(elapsed * 1.2) * 0.06
@@ -130,8 +135,19 @@ function ParticleHeart({ active }) {
         const dy = p.targetY - h / 2
         const wave = Math.sin(p.angle * 3 + elapsed * waveSpeed) * 3
 
-        const drawX = p.arrived ? p.targetX + dx * breathe + Math.cos(p.angle) * wave : p.x
-        const drawY = p.arrived ? p.targetY + dy * breathe + Math.sin(p.angle) * wave : p.y
+        let drawX, drawY
+        if (!p.arrived) {
+          drawX = p.x
+          drawY = p.y
+        } else if (p.inner) {
+          const driftX = Math.sin(elapsed * p.driftSpeed + p.driftPhase) * p.driftRadius
+          const driftY = Math.cos(elapsed * p.driftSpeed * 0.7 + p.driftPhase + 1.3) * p.driftRadius
+          drawX = p.targetX + dx * breathe + driftX
+          drawY = p.targetY + dy * breathe + driftY
+        } else {
+          drawX = p.targetX + dx * breathe + Math.cos(p.angle) * wave
+          drawY = p.targetY + dy * breathe + Math.sin(p.angle) * wave
+        }
 
         const alpha = p.arrived
           ? 0.5 + Math.sin(elapsed * 2 + p.angle * 2) * 0.3
@@ -199,17 +215,25 @@ function App() {
   const [showFireworks, setShowFireworks] = useState(false)
   const [hideStars, setHideStars] = useState(false)
   const [showGreeting, setShowGreeting] = useState(false)
+  /// For Production, use the line to enable countdown
   const [ready, setReady] = useState(() => Date.now() >= TARGET_DATE)
+  //const [ready, setReady] = useState(true)
+  /// For Development, uncomment above to skip countdown
   const [timeLeft, setTimeLeft] = useState(getTimeLeft)
+  const [justBecameReady, setJustBecameReady] = useState(false)
   const balloonsRef = useRef(null)
+  const buttonRef = useRef(null)
 
   useEffect(() => {
     if (ready) return
     const id = setInterval(() => {
       const tl = getTimeLeft()
       if (!tl) {
-        setReady(true)
-        setTimeLeft(null)
+        setJustBecameReady(true)
+        setTimeout(() => {
+          setReady(true)
+          setTimeLeft(null)
+        }, 600)
         clearInterval(id)
       } else {
         setTimeLeft(tl)
@@ -217,6 +241,22 @@ function App() {
     }, 1000)
     return () => clearInterval(id)
   }, [ready])
+
+  useEffect(() => {
+    if (!ready || !justBecameReady || !buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    const x = (rect.left + rect.width / 2) / window.innerWidth
+    const y = (rect.top + rect.height / 2) / window.innerHeight
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { x, y },
+      colors: ['#d2647a', '#e8a0b0', '#ffffff', '#f5c6d0'],
+      gravity: 0.8,
+      scalar: 0.9,
+    })
+    setJustBecameReady(false)
+  }, [ready, justBecameReady])
 
   const handleStart = useCallback(() => {
     if (balloonsRef.current) {
@@ -300,28 +340,61 @@ function App() {
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
             >
-              <SparklesText
-                text={ready ? "Нажми, когда будешь готова" : "Ещё рано"}
-                className="popup-sparkle-text"
-                sparklesCount={8}
-                colors={{ first: 'rgba(255,255,255,0.6)', second: 'rgba(255,255,255,0.3)' }}
-              />
-              {!ready && timeLeft && (
-                <div className="countdown">
-                  <span className="countdown-segment">{timeLeft.d}<small>д</small></span>
-                  <span className="countdown-segment">{String(timeLeft.h).padStart(2, '0')}<small>ч</small></span>
-                  <span className="countdown-segment">{String(timeLeft.m).padStart(2, '0')}<small>м</small></span>
-                  <span className="countdown-segment">{String(timeLeft.s).padStart(2, '0')}<small>с</small></span>
-                </div>
-              )}
-              <button
+              <AnimatePresence mode="wait">
+                {ready ? (
+                  <motion.div
+                    key="ready-text"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  >
+                    <SparklesText
+                      text="Нажми, когда будешь готова"
+                      className="popup-sparkle-text"
+                      sparklesCount={8}
+                      colors={{ first: 'rgba(255,255,255,0.6)', second: 'rgba(255,255,255,0.3)' }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="waiting-text"
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <SparklesText
+                      text="Ещё рано"
+                      className="popup-sparkle-text"
+                      sparklesCount={8}
+                      colors={{ first: 'rgba(255,255,255,0.6)', second: 'rgba(255,255,255,0.3)' }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {!ready && timeLeft && (
+                  <motion.div
+                    className="countdown"
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <span className="countdown-segment">{timeLeft.d}<small>д</small></span>
+                    <span className="countdown-segment">{String(timeLeft.h).padStart(2, '0')}<small>ч</small></span>
+                    <span className="countdown-segment">{String(timeLeft.m).padStart(2, '0')}<small>м</small></span>
+                    <span className="countdown-segment">{String(timeLeft.s).padStart(2, '0')}<small>с</small></span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <motion.button
+                ref={buttonRef}
                 type="button"
                 className={`start-button${ready ? '' : ' start-button--disabled'}`}
                 onClick={handleStart}
                 disabled={!ready}
+                animate={ready ? { scale: [0.95, 1.05, 1], opacity: 1 } : { opacity: 0.3 }}
+                transition={ready ? { duration: 0.5, ease: 'easeOut' } : {}}
               >
                 открыть
-              </button>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
@@ -361,7 +434,7 @@ function App() {
           >
             <div className="message-line main-greeting">
               <SparklesText
-                text="С Днём Рождения"
+                text="С днём рождения"
                 className="greeting-sparkle-text"
                 sparklesCount={12}
                 colors={{ first: '#d2647a', second: '#e8a0b0' }}
